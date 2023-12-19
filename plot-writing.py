@@ -30,8 +30,8 @@ def main():
         choice = int(input("Enter the option number: "))
 
         if choice == 1:
-            print("Last time you updated you had " + str(words_remaining[-1]) + " words remaining in this project.\nYour word goal is " + str(word_goal))
-            current_total = int(input("Enter the most CURRENT TOTAL word count: "))
+            print("Last time you said your total word count was " + str(word_goal - words_remaining[-1]) + " words out of your " + str(word_goal) + " word goal")
+            current_total = int(input("What's your total word count now? "))
             words_written = word_goal - current_total
             words_remaining[-1] -= word_goal - words_written
             words_remaining.append(words_remaining[-1])
@@ -55,10 +55,10 @@ def project_menu(data_file):
         project_ids = []
 
     print("\nSelect an option:")
-    print("1. Create a new project")
+    print("1. Make a new project")
     if project_ids:
         print("2. Select an existing project")
-        print("3. Remove a project")
+        print("3. Delete a project")
 
     choice = int(input("Enter the option number: "))
 
@@ -76,7 +76,7 @@ def project_menu(data_file):
         print("\nExisting projects:")
         for project_id in project_ids:
             print(f"  {project_id}")
-        project_id = input("Enter the project ID you want to remove: ")
+        project_id = input("Enter the project ID you want to DELETE FOREVER: ")
         remove_project(project_id, data_file)
         return None
     else:
@@ -102,12 +102,10 @@ def load_or_create_project(project_id, data_file):
             start_time, goal_date, word_goal = get_project_details()
             timestamps = [start_time]
             words_remaining = [word_goal]
-            #save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
     else:
         start_time, goal_date, word_goal = get_project_details()
         timestamps = [start_time]
         words_remaining = [word_goal]
-        # save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
 
     return start_time, goal_date, word_goal, timestamps, words_remaining
 
@@ -160,8 +158,8 @@ def plot_progress(start_time, goal_date, timestamps, words_remaining, word_goal)
     # Calculate actual line color
     line_color = 'r' if words_remaining[-1] > (word_goal - word_goal / ((goal_date - start_time).days) * (datetime.datetime.now() - start_time).days) else 'g'
 
-    # Plot actual words remaining
-    plt.plot(timestamps, words_remaining, marker='_', markersize=4, linestyle='-', color=line_color, label='ACTUAL WORDS REMAINING')
+    # Plot words written
+    plt.plot(timestamps, words_remaining, marker='_', markersize=4, linestyle='-', color=line_color, label='WORDS WRITTEN')
     plt.plot(timestamps[-1], words_remaining[-1], marker='o', markersize=4, color=line_color)
     
     # Plot ideal burndown line
