@@ -2,7 +2,12 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
+import csv
 import os
+
+# A simple python program that tracks progress on writing projects and plots them as a burndown chart. 
+# Supports multiple projects and storage in a single, flat, human-readable CSV file.
+# Create csv file in current working directory. This will hold our data
 
 def main():
     data_file = 'word_count_data.csv'
@@ -14,6 +19,8 @@ def main():
 
     start_time, goal_date, word_goal, timestamps, words_remaining = load_or_create_project(project_id, data_file)
 
+# If csv file already exists, loop here to show menu, accept user input
+
     while True:
         print("\nSelect an option:")
         print("1. Update word count")
@@ -23,9 +30,10 @@ def main():
         choice = int(input("Enter the option number: "))
 
         if choice == 1:
-            current_total = int(input("Enter the most current total word count: "))
-            words_written = word_goal - words_remaining[-1] - current_total
-            words_remaining[-1] -= words_written
+            print("Last time you updated you had " + str(words_remaining[-1]) + " words remaining in this project.\nYour word goal is " + str(word_goal))
+            current_total = int(input("Enter the most CURRENT TOTAL word count: "))
+            words_written = word_goal - current_total
+            words_remaining[-1] -= word_goal - words_written
             words_remaining.append(words_remaining[-1])
             timestamps.append(datetime.datetime.now())
             save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
@@ -36,6 +44,8 @@ def main():
             break
         else:
             print("Invalid option")
+
+# If no csv file exists, use this function to make a new project with user input
 
 def project_menu(data_file):
     if os.path.exists(data_file):
@@ -75,6 +85,8 @@ def project_menu(data_file):
 
     return project_id
 
+# If data for the selected project doesn't exist, create the fields. If it does, load the data into the array get_project_details()
+
 def load_or_create_project(project_id, data_file):
     if os.path.exists(data_file):
         df = pd.read_csv(data_file)
@@ -84,20 +96,22 @@ def load_or_create_project(project_id, data_file):
             start_time = pd.to_datetime(project_data.iloc[0]['Start Date'])
             goal_date = pd.to_datetime(project_data.iloc[0]['Goal Date'])
             word_goal = project_data.iloc[0]['Word Goal']
-            timestamps = pd.to_datetime(project_data['Timestamp']).tolist()
+            timestamps = pd.to_datetime(project_data['Timestamp'], format='ISO8601').tolist()
             words_remaining = project_data['Words Remaining'].tolist()
         else:
             start_time, goal_date, word_goal = get_project_details()
             timestamps = [start_time]
             words_remaining = [word_goal]
-            save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
+            #save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
     else:
         start_time, goal_date, word_goal = get_project_details()
         timestamps = [start_time]
         words_remaining = [word_goal]
-        save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
+        # save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
 
     return start_time, goal_date, word_goal, timestamps, words_remaining
+
+# Accept user input into the array get_project_details()
 
 def get_project_details():
     start_time_str = input("Enter the start date (YYYY-MM-DD) or press Enter for today: ")
@@ -114,29 +128,31 @@ def get_project_details():
     
     return start_time, goal_date, word_goal
 
+# function to save data back to the CSV file, if called with no file then one 
+# is created with fields names as headers and then function is called again
 
 def save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file):
-    data = {
-        'Project ID': [project_id] * len(timestamps),
-        'Timestamp': timestamps,
-        'Words Remaining': words_remaining,
-        'Start Date': [start_time] * len(timestamps),
-        'Goal Date': [goal_date] * len(timestamps),
-        'Word Goal': [word_goal] * len(timestamps),
-    }
-    df = pd.DataFrame(data)
-
     if os.path.exists(data_file):
-        df_existing = pd.read_csv(data_file)
-        df = pd.concat([df_existing, df])
+        data = [project_id, timestamps[-1].strftime('%Y-%m-%d %H:%M:%S'), words_remaining[-1], start_time, goal_date, word_goal]
+        with open (data_file, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(data)
+    else:
+        data = ['Project ID', 'Timestamp', 'Words Remaining', 'Start Date', 'Goal Date', 'Word Goal']
+        with open (data_file, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(data)
+        save_to_csv(project_id, timestamps, words_remaining, start_time, goal_date, word_goal, data_file)
 
-    df.to_csv(data_file, index=False)
+# function to remove a project
 
 def remove_project(project_id, data_file):
     df = pd.read_csv(data_file)
     df = df[df['Project ID'] != project_id]
     df.to_csv(data_file, index=False)
     print(f"Project {project_id} removed.")
+
+# function to plot progress using matplotlib
 
 def plot_progress(start_time, goal_date, timestamps, words_remaining, word_goal):
     plt.figure(figsize=(10, 5), facecolor='white')
