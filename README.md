@@ -10,7 +10,7 @@ This is a simple python program that tracks progress on writing projects and plo
 
 ## Installation
 
-You'll need to get the require python packages with something like ``pip install matplotlib pandas``.
+You'll need to get the required python packages with something like ``pip install matplotlib pandas``.
 
 Use ``git clone https://github.com/oceanpenguin/writing-burndown-plotter.git`` and then ``cd`` into ``writing-burndown-plotter``. 
 
